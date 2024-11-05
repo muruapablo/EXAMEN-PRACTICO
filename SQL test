@@ -1,0 +1,53 @@
+CREATE TABLE Clientes (
+    clt_id NUMBER PRIMARY KEY,
+    clt_tipo_doc VARCHAR2(3),
+    clt_documento NUMBER,
+    clt_apellido VARCHAR2(30),
+    clt_nombre VARCHAR2(30),
+    clt_sexo VARCHAR2(1)
+);
+
+-- Crear la tabla Celulares
+CREATE TABLE Celulares (
+    clu_numero NUMBER PRIMARY KEY,
+    clu_clt_id NUMBER,
+    clu_estado VARCHAR2(1),
+    clu_fecha_alta DATE,
+    clu_fecha_baja DATE,
+    FOREIGN KEY (clu_clt_id) REFERENCES Clientes(clt_id)
+);
+
+-- Ejercicio 1: Celulares vigentes
+SELECT ce.clu_numero, c.clt_nombre, c.clt_apellido
+FROM Celulares ce
+JOIN Clientes c ON ce.clu_clt_id = c.clt_id
+WHERE ce.clu_estado = 'A'
+  AND ce.clu_fecha_alta <= ADD_MONTHS(SYSDATE, -6);
+
+-- Ejercicio 2: Eliminar celulares
+DELETE FROM Celulares
+WHERE clu_clt_id IN (
+    SELECT clt_id
+    FROM Clientes
+    WHERE clt_tipo_doc = 'LE'
+      AND LOWER(clt_apellido) LIKE '%nan%'
+);
+
+-- Ejercicio 3: Cantidad de estados de celulares por sexo
+SELECT clu_estado, COUNT(*)
+FROM Celulares c
+INNER JOIN Clientes cl ON c.clu_clt_id = cl.clt_id
+WHERE cl.clt_sexo = 'C'
+GROUP BY clu_estado
+HAVING COUNT(*) > 5;
+
+-- 4. Cancelar todos los celulares de clientes de sexo "Compañía" 
+UPDATE Celulares ce
+SET ce.clu_estado = 'C'
+WHERE ce.clu_estado = 'S'
+  AND ce.clu_clt_id IN (
+      SELECT clt_id
+      FROM Clientes
+      WHERE clt_sexo = 'C'
+        AND clt_tipo_doc = 'LE'
+  );
